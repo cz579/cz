@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>平面战争V1.2</title>
+  <script>
+    (function () {
+      var coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      var small = Math.min(innerWidth, innerHeight) < 720;
+      if (coarse || small) {
+        document.documentElement.classList.add("touch-ui");
+        document.documentElement.style.setProperty("--ui-sx", "1");
+        document.documentElement.style.setProperty("--ui-sy", "1");
+        return;
+      }
+      var s = document.documentElement.style;
+      s.setProperty("--ui-sx", String(innerWidth / 1600));
+      s.setProperty("--ui-sy", String(innerHeight / 900));
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <section id="menu">
+      <div class="menu-bg" aria-hidden="true"></div>
+      <button id="btn-settings" class="menu-settings ghost" type="button">游戏设置</button>
+      <div class="menu-card">
+        <p class="kicker">TURN-BASED WAR</p>
+        <h1>平面战争V1.2</h1>
+        <p class="lead">
+          两人战争棋。人机、热座或联机，攻占对方全部城市即获胜。<br />
+          自己的城市全部失守则全军覆没。
+        </p>
+        <div id="menu-home">
+          <div class="menu-actions">
+            <button id="btn-new-game" class="primary" type="button">新游戏</button>
+            <button id="btn-map-editor" class="ghost" type="button">地图编辑器</button>
+            <button id="btn-load" class="ghost save-load-btn" type="button" disabled>
+              <span>读取存档</span>
+              <span class="save-meta" id="save-meta">还没有存档</span>
+            </button>
+            <button id="btn-tutorial" class="ghost" type="button">新手教程</button>
+          </div>
+        </div>
+        <div id="menu-new" class="hidden">
+          <p class="pick-label">对战方式</p>
+          <div class="mode-picks" id="mode-picks">
+            <button class="mode-pick selected" data-mode="vsai" type="button">
+              <span class="map-name">人机对战</span>
+              <span class="map-meta">可选蓝方或红方，电脑指挥另一方</span>
+            </button>
+            <button class="mode-pick" data-mode="hotseat" type="button">
+              <span class="map-name">热座对战</span>
+              <span class="map-meta">同一台电脑，蓝红轮流操作</span>
+            </button>
+            <button class="mode-pick" data-mode="online" type="button">
+              <span class="map-name">联机对战</span>
+              <span class="map-meta">局域网两人，创建或加入房间</span>
+            </button>
+            <button class="mode-pick" data-mode="campaign" type="button">
+              <span class="map-name">攻防战役</span>
+              <span class="map-meta">6 张固定地图连环关：进攻限时占领全部城市，防守撑过回合</span>
+            </button>
+          </div>
+          <div id="skirmish-maps">
+          <p class="pick-label">选择地图规模</p>
+          <div class="map-picks" id="map-picks">
+            <button class="map-pick" data-size="small" type="button">
+              <span class="map-name">小地图</span>
+              <span class="map-size">45 × 40</span>
+              <span class="map-meta">各方 3 座城市 · 随机地形</span>
+            </button>
+            <button class="map-pick selected" data-size="normal" type="button">
+              <span class="map-name">普通地图</span>
+              <span class="map-size">55 × 50</span>
+              <span class="map-meta">各方 4 座城市 · 随机地形</span>
+            </button>
+            <button class="map-pick" data-size="large" type="button">
+              <span class="map-name">大地图</span>
+              <span class="map-size">65 × 60</span>
+              <span class="map-meta">各方 5 座城市 · 随机地形</span>
+            </button>
+            <button class="map-pick" data-size="huge" type="button">
+              <span class="map-name">超大地图</span>
+              <span class="map-size">75 × 60</span>
+              <span class="map-meta">各方 6 座城市 · 随机地形</span>
+            </button>
+          </div>
+          <p class="pick-label">固定地图</p>
+          <div class="map-picks" id="scenario-picks">
+            <button class="map-pick" data-scenario="plains" type="button">
+              <span class="map-name">平原对决</span>
+              <span class="map-size">55 × 50</span>
+              <span class="map-meta">各方 4 座城市 · 无海洋 · 左右对称</span>
+            </button>
+            <button class="map-pick" data-scenario="strait" type="button">
+              <span class="map-name">中央海峡</span>
+              <span class="map-size">55 × 50</span>
+              <span class="map-meta">各方 4 座城市 · 竖向海峡 · 须渡海</span>
+            </button>
+            <button class="map-pick" data-scenario="mountains" type="button">
+              <span class="map-name">中央山脉</span>
+              <span class="map-size">55 × 50</span>
+              <span class="map-meta">各方 4 座城市 · 北南山口 · 中央隧道</span>
+            </button>
+            <button class="map-pick" data-scenario="woods" type="button">
+              <span class="map-name">密林丘陵</span>
+              <span class="map-size">55 × 50</span>
+              <span class="map-meta">各方 4 座城市 · 无海洋 · 林丘密布</span>
+            </button>
+            <button class="map-pick" data-scenario="isles" type="button">
+              <span class="map-name">群岛</span>
+              <span class="map-size">55 × 50</span>
+              <span class="map-meta">各方 4 座城市 · 以海为主 · 须渡海</span>
+            </button>
+            <button class="map-pick" data-scenario="rift" type="button">
+              <span class="map-name">裂谷关隘</span>
+              <span class="map-size">55 × 50</span>
+              <span class="map-meta">各方 4 座城市 · 单格裂谷 · 三关口</span>
+            </button>
+          </div>
+          <p class="pick-label">自定义地图</p>
+          <div class="map-picks" id="custom-picks"></div>
+          <p class="mode-note" id="custom-picks-empty">还没有自定义地图。可在地图编辑器中绘制并保存。</p>
+          </div>
+          <div id="campaign-setup" class="hidden">
+            <p class="pick-label">选择角色</p>
+            <div class="mode-picks side-picks" id="campaign-role-picks">
+              <button class="mode-pick selected" data-role="attack" type="button">
+                <span class="map-name">进攻</span>
+                <span class="map-meta">后方 2 城、经费充足，限时内须占领全部城市</span>
+              </button>
+              <button class="mode-pick" data-role="defend" type="button">
+                <span class="map-name">防守</span>
+                <span class="map-meta">保有 4 城与前线要塞，撑到回合上限即胜</span>
+              </button>
+            </div>
+            <p class="pick-label">战役关卡</p>
+            <p class="mode-note" id="campaign-progress-note">可任选关卡与攻守。通关会记进度，方便回看。</p>
+            <div class="map-picks" id="campaign-picks"></div>
+          </div>
+          <div id="side-picks-wrap">
+            <p class="pick-label">选择阵营</p>
+            <div class="mode-picks side-picks" id="side-picks">
+              <button class="mode-pick selected" data-side="player" type="button">
+                <span class="map-name">蓝方</span>
+                <span class="map-meta">左侧先手，电脑指挥红方</span>
+              </button>
+              <button class="mode-pick" data-side="ai" type="button">
+                <span class="map-name">红方</span>
+                <span class="map-meta">右侧后手，电脑指挥蓝方</span>
+              </button>
+            </div>
+          </div>
+          <div id="turn-range-wrap">
+          <p class="pick-label">回合范围</p>
+          <div class="online-row turn-range-row">
+            <label class="online-field">
+              <span>起始回合</span>
+              <input id="opt-turn-start" type="number" min="0" max="5000" step="1" placeholder="0" />
+            </label>
+            <label class="online-field">
+              <span>结束回合</span>
+              <input id="opt-turn-end" type="number" min="0" max="9999" step="1" placeholder="500" />
+            </label>
+          </div>
+          <p class="mode-note">不填则从第 0 回合打到第 500 回合。到达结束回合仍未灭国时，按城市数判定，相同再比剩余部队、金钱。</p>
+          </div>
+          <label class="menu-check" for="opt-ocean">
+            <input type="checkbox" id="opt-ocean" />
+            <span>生成海洋地形<span class="check-note">地面单位无法经过或停留，空军可飞越</span></span>
+          </label>
+          <label class="menu-check" for="opt-fog">
+            <input type="checkbox" id="opt-fog" />
+            <span>战争迷雾<span class="check-note">只看得见己方视野内的敌军；走过的地形会留下记忆</span></span>
+          </label>
+          <label class="menu-check" for="opt-hold">
+            <input type="checkbox" id="opt-hold" />
+            <span>据点争夺<span class="check-note">每 10 回合按占城计分，先到目标即胜；灭国仍算赢</span></span>
+          </label>
+          <div id="menu-offline-actions" class="menu-actions">
+            <button id="btn-start" class="primary" type="button">开始战役</button>
+            <button id="btn-back-menu" class="ghost" type="button">返回</button>
+          </div>
+          <div id="menu-online" class="hidden">
+            <p class="pick-label">联机房间</p>
+            <p class="mode-note" id="online-hint">请先运行「联机对战.bat」启动房间服务器。创建房间的一方为蓝方，加入的一方为红方。联机中可手动存档；也可用本地存档开房间继续打。勾选攻防战役则随机两张固定地图打两局，第一局随机攻守，第二局换边。</p>
+            <label class="menu-check" for="opt-online-campaign">
+              <input type="checkbox" id="opt-online-campaign" />
+              <span>攻防战役<span class="check-note">随机两张固定地图，两局换攻守；第一局结束后蓝方点「进入第二局」</span></span>
+            </label>
+            <div class="online-row">
+              <label class="online-field">
+                <span>主机地址</span>
+                <input id="opt-net-host" type="text" placeholder="本机可留空，对方填局域网 IP" autocomplete="off" />
+              </label>
+              <label class="online-field">
+                <span>房间号</span>
+                <input id="opt-net-code" type="text" maxlength="8" placeholder="加入时填写" autocomplete="off" />
+              </label>
+            </div>
+            <div class="menu-actions">
+              <button id="btn-host" class="primary" type="button">创建房间（蓝方）</button>
+              <button id="btn-host-save" class="ghost save-load-btn" type="button" disabled>
+                <span>用存档创建房间</span>
+                <span class="save-meta" id="online-save-meta">还没有存档</span>
+              </button>
+              <button id="btn-join" class="ghost" type="button">加入房间（红方）</button>
+              <button id="btn-back-menu-online" class="ghost" type="button">返回</button>
+            </div>
+          </div>
+        </div>
+        <p class="hint">左键选择 / 移动 / 远程开火　右键查看、部署、近战突击　地面/空域可切换　滚轮缩放　拖动平移　N 跳转未行动单位<br />手机：点选单位后点格子移动；征召后点己方蓝区部署；长按查看城市；单指拖动地图；双指缩放。建议横屏。</p>
+      </div>
+    </section>
+
+    <section id="game-screen" class="hidden">
+      <header id="topbar">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <span>平面战争V1.2</span>
+        </div>
+        <div class="status-pills">
+          <div class="pill" id="pill-turn">第 0 回合 · 准备阶段</div>
+          <div class="pill gold" id="pill-money">金钱 1000 元</div>
+          <div class="pill" id="pill-cities">城市 0 / 0</div>
+          <div class="pill gold hidden" id="pill-hold">据点 0 : 0</div>
+          <div class="pill gold hidden" id="pill-campaign">战役</div>
+          <div class="pill" id="pill-income">收入 +0</div>
+          <div class="pill gold" id="pill-comp">失城补偿 1750 元</div>
+        </div>
+        <div class="top-actions">
+          <button id="btn-help" class="ghost">规则</button>
+          <button id="btn-save" class="ghost">存档</button>
+          <button id="btn-next-idle" class="ghost">未行动</button>
+          <button id="btn-cancel" class="ghost">取消</button>
+          <button id="btn-end" class="primary">结束回合</button>
+        </div>
+        <div id="editor-bar">
+          <input id="editor-name" type="text" maxlength="24" placeholder="地图名称" autocomplete="off" />
+          <select id="editor-load" title="载入">
+            <option value="">载入地图…</option>
+          </select>
+          <label class="editor-check" for="editor-ocean">
+            <input type="checkbox" id="editor-ocean" />
+            <span>随机含海洋</span>
+          </label>
+          <button id="btn-editor-save" class="ghost" type="button">保存</button>
+          <button id="btn-editor-saveas" class="ghost" type="button">另存</button>
+          <button id="btn-editor-delete" class="ghost" type="button">删除</button>
+          <button id="btn-editor-back" class="ghost" type="button">返回菜单</button>
+        </div>
+      </header>
+
+      <div id="workspace">
+        <div id="stage-wrap">
+          <canvas id="board" width="1280" height="720"></canvas>
+          <div id="layer-switch" class="layer-switch">
+            <button id="btn-layer-ground" type="button" class="active">地面</button>
+            <button id="btn-layer-air" type="button">空域</button>
+          </div>
+          <div id="layer-tag">地面</div>
+          <div id="toast"></div>
+          <div id="hover-tip" class="hidden"></div>
+          <div id="city-card" class="hidden"></div>
+          <div id="ai-banner" class="hidden">红方正在行动…</div>
+          <div id="net-banner" class="hidden">等待对手加入…</div>
+          <button id="btn-next-idle-float" class="next-idle-btn" type="button">未行动单位</button>
+          <button id="btn-end-float" class="end-turn-btn" type="button">结束回合</button>
+        </div>
+
+        <aside id="side">
+          <div id="side-play">
+          <section class="panel">
+            <div class="panel-h">
+              <h2>征召</h2>
+              <span class="muted" id="shop-hint">左击选择，地面在蓝区右击，空军在机场右击</span>
+            </div>
+            <div id="shop"></div>
+          </section>
+          <section class="panel grow">
+            <div class="panel-h">
+              <h2>情报</h2>
+              <div class="atk-btns">
+                <button id="btn-ranged" class="ghost small hidden">远程攻击</button>
+                <button id="btn-air-atk" class="ghost small hidden">攻击空军</button>
+                <button id="btn-land" class="ghost small hidden">降落</button>
+                <button id="btn-takeoff" class="ghost small hidden">起飞</button>
+                <button id="btn-escort" class="ghost small hidden">护卫</button>
+                <button id="btn-unescort" class="ghost small hidden">解除护卫</button>
+                <button id="btn-road" class="ghost small hidden">铺路 75</button>
+                <button id="btn-fort" class="ghost small hidden">要塞 500</button>
+                <button id="btn-tunnel" class="ghost small hidden">开隧道 300</button>
+                <button id="btn-board" class="ghost small hidden">上船</button>
+                <button id="btn-unload" class="ghost small hidden">下船</button>
+              </div>
+            </div>
+            <div id="inspect">
+              <p class="muted inspect-empty">右键单位查看数据。选中后左键可到达格子以移动，右键敌方单位或城市以近战。空军需选择攻击地面或攻击空军。</p>
+            </div>
+          </section>
+          </div>
+          <div id="side-editor">
+            <section class="panel">
+              <div class="panel-h">
+                <h2>阵营</h2>
+              </div>
+              <div class="editor-picks" id="editor-owner">
+                <button type="button" class="editor-pick selected" data-owner="player">蓝方</button>
+                <button type="button" class="editor-pick" data-owner="ai">红方</button>
+              </div>
+              <div class="editor-money">
+                <label>蓝方开局金钱 <input id="editor-money-player" type="number" min="0" max="99999" step="50" value="1000" /></label>
+                <label>红方开局金钱 <input id="editor-money-ai" type="number" min="0" max="99999" step="50" value="1000" /></label>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-h">
+                <h2>笔刷</h2>
+                <span class="muted">左键涂 · 右键清除</span>
+              </div>
+              <div class="editor-picks" id="editor-brush-size">
+                <button type="button" class="editor-pick selected" data-size="1">1 格</button>
+                <button type="button" class="editor-pick" data-size="3">3 × 3</button>
+              </div>
+              <p class="editor-sec">地形</p>
+              <div class="editor-picks wrap" id="editor-terrain"></div>
+              <p class="editor-sec">城市与建筑</p>
+              <div class="editor-picks wrap" id="editor-place">
+                <button type="button" class="editor-pick" data-kind="city">城市</button>
+                <button type="button" class="editor-pick" data-kind="airport">机场</button>
+                <button type="button" class="editor-pick" data-kind="fortress">要塞</button>
+              </div>
+            </section>
+            <section class="panel grow">
+              <div class="panel-h">
+                <h2>单位</h2>
+              </div>
+              <div id="editor-units"></div>
+              <p class="muted" id="editor-hint">先选阵营和笔刷，再在地图上点格。地形可拖动连涂。</p>
+            </section>
+          </div>
+        </aside>
+      </div>
+
+      <footer id="log-bar">
+        <div id="log-tabs" class="log-tabs">
+          <button type="button" id="tab-log" class="log-tab active">战报</button>
+          <button type="button" id="tab-chat" class="log-tab">对话</button>
+        </div>
+        <div id="log"></div>
+        <div id="chat-pane">
+          <div id="chat-log"></div>
+          <form id="chat-form">
+            <input id="chat-input" type="text" maxlength="120" placeholder="对对手说…" autocomplete="off" />
+            <button type="submit" class="ghost small" id="btn-chat-send">发送</button>
+          </form>
+        </div>
+      </footer>
+    </section>
+
+    <div id="modal-help" class="modal hidden">
+      <div class="modal-card wide">
+        <h2>作战规则</h2>
+        <div class="help-grid">
+          <div>
+            <h3>胜负</h3>
+            <p>每名玩家拥有若干城市。己方城市全部被攻占即战败，所有单位消失。占领地图上全部城市即获胜。开局可设定起始与结束回合，不填则从第 0 回合打到第 500 回合。到达结束回合仍未灭国时，先比城市数，再比剩余部队，再比金钱；全平则平局。勾选据点争夺后，从第 10 回合起每 10 回合按当前占城数计分，先达到目标分（开局每方城市数×4，至少 12）即获胜；到达结束回合仍未分出则先比据点，再比城市、部队、金钱。灭国或占领全图仍立即获胜。地图可选随机规模，或固定地图「平原对决」「中央海峡」「中央山脉」「密林丘陵」「群岛」「裂谷关隘」。攻防战役用人机打这 6 张固定地图：可任选关卡，并自选进攻或防守。进攻方开局 2 座后方城市、经费更多，限时内须占领全部城市即胜；这 2 座初始城不能被敌方占领。防守方保有 4 座城市和前线要塞，撑到回合上限仍保有任何一座原城市即胜。防守方城市全部易手仍立即分出胜负。通关会记进度。人机对战可选择蓝方或红方，电脑指挥另外一方；蓝方始终先手。</p>
+            <h3>城市</h3>
+            <p>城市占 1 格，周围 8 格（含斜角）为控制区：蓝为自己，红为敌人。第 10 回合后，每 15 回合所有城市控制区扩大 1 圈（5×5，再 7×7），每座城市最多扩大 2 圈。重叠时离城市更近的一方生效。城市 10 点生命，己方回合开始回复 2 点，最低 0 点。近战把敌方城市打到 0 点后，突击单位进入城市格，该城易主。被敌方占领后，该城生命变为 1。第 10 回合起，一座城市连续 3 回合未被攻击即进入修战。修战中可升级友军城市：经济（200 元起，每升一次价格 +100，该城每回合收益 +100）或工事（600 元，生命上限 +5 并回复 5）。每名玩家每座城市每 5 回合只能升级 1 次。城市被占领后升级效果仍保留。右键城市查看升级效果，友军城市还会显示升级选项。城市格永远是平地。</p>
+            <h3>地形</h3>
+            <p>格子为平地、森林、丘陵、山峰、道路、穿山隧道或海洋。步兵：平地/森林消耗 1，丘陵 2。车辆与火炮：平地 1，森林 2，丘陵 3。从道路格走出视为 0.5 格。穿山隧道可通行，四向相邻的隧道自动连通，穿过连通隧道到达另一端视为移动 1 格。林中步兵、丘陵上的地面单位受地面伤害 −1；坦克和步战车在森林中输出 −1。直射会被中间的森林、丘陵或山峰挡住；攻城炮和迫击炮可越过林丘，但山峰挡住直射和曲射。地面单位无法进入山峰或海洋，也无法在海洋上停留或部署。空军可以飞越海洋。海军只能在海洋或沿海城市行动。机场只能建在平地；处于敌方控制区的机场会易主。</p>
+            <h3>平民与工程</h3>
+            <p>军事工程师 300 元，移动 3，无法攻击，被击即死。相邻的军事地面单位可与其组成护卫队：同格移动（移速跟军事单位），平民无法被攻击；可中途解除，护卫死亡则护卫队解散。工程师在平地花 75 元铺路；在非山峰、非海洋、非城市空格花 500 元建前线要塞（可建在原控制区外，周围 3×3 变为控制区，可驻 2 个地面单位，内部免疫近战与直射，生命 10 每回合 +1，摧毁后单位被挤到相邻格，无空位则死亡）；相邻山峰（含斜角）花 300 元开穿山隧道。修建 1 座前线要塞或开通 2 条隧道后，该工程师撤离消失。铺路不计入这项限制。</p>
+            <h3>金钱</h3>
+            <p>开局各方 1000 元。从第 1 回合开始，每一回合每位玩家每拥有一座城市就获得 100 元，另加该城经济升级带来的额外收益。第 0 回合是准备阶段，没有这项收入。每失去一座城市，该玩家立即获得补偿：首次 1750 元，之后每再丢一座 +500 元；攻占一座城市后，自己的失城补偿重置为 1750 元。士兵在第 10 回合之前可任意购买；从第 10 回合起，每回合士兵总共最多购买 6 个。非士兵单位每种各自每 2 回合只能购买 1 次，冷却互不影响。</p>
+          </div>
+          <div>
+            <h3>行动</h3>
+            <p>第 0 回合只能购买部署。第 1 回合起，每名友军每回合可移动一次。除机关枪队、战斗机每回合可攻击两次外，其余单位每回合攻击一次。步战车移动 6，基础伤害 2.5、打士兵 4；轻/重型坦克可远程攻击，射程 2，伤害与近战相同，每回合远程 1 次，移动后仍可开火。迫击炮 2 回合内只能攻击 1 次，且同一回合不能既移动又攻击。防空炮无法移动，对空伤害 4、对地伤害 2、射程 6，受到空军伤害减半；被空军对地打中时，飞机会吃到对空伤害一半的反击。自行防空炮移动 3，对空伤害 3.5、对地伤害 2、射程 4，移动后仍可开火，受到攻击机和战斗机伤害减半，同样会对打它的飞机反击一半对空伤害。空军须先移动后攻击，攻击后本回合不能再移动。新部署的单位当回合不能行动。</p>
+            <h3>操作</h3>
+            <p>左上角可切换「地面 / 空域」（快捷键 Tab）。地面层操作地面单位、海军、城市与近战；空域层操作空军与机场。左击商店选择兵种，地面单位在控制区或城市右击部署；海军在海洋或沿海城市右击部署；空军必须在己方机场或航母右击部署。右击单位查看数据；再左击可到达格子移动。远程单位点「远程攻击」后再点目标。与运输船相邻可点「上船」，选中运输船可「下船」。点「未行动」或按 N 跳转到下一个尚未行动的友军。战争迷雾开启后，只能看见己方视野内的敌军与敌建筑；走过的地形会留下记忆。</p>
+            <h3>空军与机场</h3>
+            <p>机场 300 元，生命 8，只能建在控制区的平地，一格一座，每座最多停 4 架友军空军。落入敌方控制区的机场立即易主，停场的原属空军被消灭。空军只能部署在机场，攻击机和战斗机也可部署/降落在航空母舰。无法近战、无法进入防守，不能远离最近友军机场或航母超过 20 格。除防空炮和自行防空炮外，地面单位无法攻击空军。空军须先移动后攻击：可以飞到位置再开火，也可以原地开火，但攻击后本回合不能再移动。飞到友军机场或航母格可点「降落」停场，停场每回合回复 2 点生命且无法被攻击。攻击机对地伤害 4、对空伤害 3、射程 4；战斗机伤害 2、射程 3、每回合攻击 2 次；轻型轰炸机对地/城市 3（3×3 全额）对空 2；重型轰炸机对地/城市 6.5（5×5 全额）对空 2。机场或航母被摧毁时停场空军消灭，超出半径的飞机会坠毁。</p>
+            <h3>海军</h3>
+            <p>勾选生成海洋后可购买海军，只能在海洋或沿海城市部署与移动，不能上陆地。受空军伤害 −1。运输船 300 元，8 血，远程 1/射程 1，移动 5，可载 6 名士兵或军事工程师，另可载 2 辆坦克/步战车/自行火炮或 1 支护卫队，相邻友军可上船。驱逐舰 850 元，8 血，近战 4，远程 3（对空 4），对地远程 3×3，射程 3，移动 3。巡洋舰 900 元，10 血，对海军远程 5、对空 4（打陆地仅 1），射程 3，移动 3。战列舰 1800 元，16 血，近战 5（仅对舰），远程 4 可打地面，射程 4，移动 2。航空母舰 1300 元，8 血，无法攻击，移动 3，攻击机和战斗机可降落，相当于移动机场。岸防炮 750 元，地面单位，只能部署在挨着海洋的陆地，每回合最多移动 1 格，射程 5，对舰 4、对地 2、攻城 3，无法近战。</p>
+            <h3>防守与驻守</h3>
+            <p>地面单位 1 回合没有任何行动即进入防守：每回合回复 1 点生命，受到近战伤害 −1，一旦行动即解除。被攻击不算行动。防守减免与地形减免不叠加，取高。有单位站在城市格上时，敌人打这座城或这个单位的伤害由城与单位平分；打单位溢出的伤害转给城市。空军不能进入防守。地形掩护对空军对地无效。</p>
+            <h3>交战反伤</h3>
+            <p>攻击敌方单位时，比较双方对该目标的近战伤害。若对方近战伤害更高，攻击者承受双方伤害差的一半。只打城市、城中无驻守单位时不触发。任意空军对地远程打中防空炮或自行防空炮时，飞机额外承受该防空单位对空伤害的一半作为反击（轰炸溅射命中也算）。</p>
+            <h3>人机</h3>
+            <p>人机对战可选蓝方或红方，电脑指挥另外一方。电脑每回合先定一个主任务（破城、守城、据点、航渡或侦察），买兵与走位围着它打；破城前会先清防空与驻军，轰炸机等火力窗口再上。会按遭遇战、攻防战役进攻或防守、迷雾、据点争夺以及海陆地图切换打法：遭遇战仍根据你的买兵、进攻和攻城在猛攻、均衡、稳守之间切换；攻防战役进攻会按日程一座一座打、保底步兵和攻城、有敌机时补防空，占城后留下驻军再打下一座，残血城优先占领，前线可分兵，回合不够时更猛攻；不回守不可占领的后方城。占到 2 座后会巩固再打，已占城危急时转守；修战中会给已占城升级。防守则收缩卡口守城，丢掉的原城若防守空虚会反夺，只剩 1～2 座原城或限时将近时死守。威胁按敌方实际射程与伤害计算，不会因为 8 格外有人就回防。满血城不会拿近战硬撞，轰炸会集火目标城并避免误伤。走位按地面可达路径而不是直线。海峡/群岛会让陆军上船、航渡、卸载后再攻城。迷雾下战斗机/攻击机朝敌城开视野，地面不走进从未探明的格子。工程师铺路时不会把唯一的步战或攻城单位绑去护送。据点争夺在第 10/20/30… 回合计分前会回城占点、争夺防守空虚的敌城，但不会自杀冲锋。山地/裂谷/密林偏步兵与攻城，平原偏坦克与炮兵。开局有机会直接采取猛攻。</p>
+            <h3>热座与联机</h3>
+            <p>热座：同一台电脑，蓝方与红方轮流操作，回合结束会出现交接画面，避免误看对方金钱与未行动单位。联机：运行「联机对战.bat」后创建房间（蓝方），对方用主机的局域网 IP 和房间号加入（红方）。规则与人机相同，只是红方改为真人。勾选攻防战役后，主机会随机抽两张固定地图打两局：第一局随机一人进攻，第二局换边；第一局结束后由蓝方点「进入第二局」。联机中可点「存档」保存到本机；创建房间时可选「用存档创建房间」，从该进度继续，创建方仍为蓝方。</p>
+          </div>
+        </div>
+        <div class="help-units" id="help-units"></div>
+        <button id="btn-help-close" class="primary">关闭</button>
+      </div>
+    </div>
+
+    <div id="modal-settings" class="modal hidden">
+      <div class="modal-card">
+        <h2>游戏设置</h2>
+        <label class="setting-row" for="opt-atk-preview">
+          <input type="checkbox" id="opt-atk-preview" checked />
+          <span>
+            <b>攻击、轰炸预览</b>
+            <span class="setting-desc">远程攻击时显示射程与轰炸范围，悬停目标时显示预估伤害。</span>
+          </span>
+        </label>
+        <label class="setting-row" for="opt-comp-hud">
+          <input type="checkbox" id="opt-comp-hud" checked />
+          <span>
+            <b>补偿数字 HUD</b>
+            <span class="setting-desc">在顶部状态栏显示当前失城补偿金额。</span>
+          </span>
+        </label>
+        <label class="setting-row setting-row-number" for="opt-autosave">
+          <span>
+            <b>自动保存回合数</b>
+            <span class="setting-desc">每隔这么多回合自动覆盖存档（5–50）。不影响手动存档。</span>
+          </span>
+          <input type="number" id="opt-autosave" min="5" max="50" step="1" value="10" />
+        </label>
+        <button id="btn-settings-close" class="primary">保存</button>
+      </div>
+    </div>
+
+    <div id="modal-end" class="modal hidden">
+      <div class="modal-card end-card">
+        <p class="kicker" id="end-kicker">战役结束</p>
+        <h2 id="end-title">胜利</h2>
+        <p id="end-desc"></p>
+        <div id="end-report" class="end-report hidden"></div>
+        <button id="btn-next-mission" class="primary hidden" type="button">下一关</button>
+        <button id="btn-again" class="primary">返回菜单</button>
+      </div>
+    </div>
+
+    <div id="modal-handover" class="modal hidden">
+      <div class="modal-card">
+        <p class="kicker">热座交接</p>
+        <h2 id="handover-title">请红方接手</h2>
+        <p id="handover-desc">蓝方已结束回合。请把座位交给红方玩家。</p>
+        <button id="btn-handover" class="primary">红方开始行动</button>
+      </div>
+    </div>
+
+    <div id="modal-net" class="modal hidden">
+      <div class="modal-card">
+        <p class="kicker">联机对战</p>
+        <h2 id="net-title">等待对手</h2>
+        <p id="net-desc"></p>
+        <p class="net-code" id="net-code-show"></p>
+        <button id="btn-net-copy" class="ghost" type="button">复制连接信息</button>
+        <button id="btn-net-cancel" class="primary" type="button">取消房间</button>
+      </div>
+    </div>
+  </div>
+  <script src="game.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>
