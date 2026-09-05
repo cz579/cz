@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>平面战争V1.2 · 新手教程</title>
+  <script>
+    (function () {
+      var s = document.documentElement.style;
+      s.setProperty("--ui-sx", String(innerWidth / 1600));
+      s.setProperty("--ui-sy", String(innerHeight / 900));
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-mode="tutorial">
+  <div id="app">
+    <section id="game-screen">
+      <header id="topbar">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <span>平面战争V1.2 · 教程</span>
+        </div>
+        <div class="status-pills">
+          <div class="pill" id="pill-turn">第 0 回合 · 准备阶段</div>
+          <div class="pill gold" id="pill-money">金钱 1000 元</div>
+          <div class="pill" id="pill-cities">城市 0 / 0</div>
+          <div class="pill" id="pill-income">收入 +0</div>
+          <div class="pill gold" id="pill-comp">失城补偿 1750 元</div>
+        </div>
+        <div class="top-actions">
+          <button id="btn-help" class="ghost">规则</button>
+          <button id="btn-next-idle" class="ghost">未行动</button>
+          <button id="btn-cancel" class="ghost">取消</button>
+          <button id="btn-end" class="primary">结束回合</button>
+        </div>
+      </header>
+
+      <div id="workspace">
+        <div id="stage-wrap">
+          <canvas id="board" width="1280" height="720"></canvas>
+          <div id="tut-card">
+            <div class="tut-progress" id="tut-progress">教学 1 / 1</div>
+            <h2 id="tut-title">新手教程</h2>
+            <p id="tut-body"></p>
+            <p id="tut-task"></p>
+            <div class="tut-actions">
+              <button id="tut-next" class="primary">下一步</button>
+              <button id="tut-skip-step" class="ghost">跳过此步</button>
+              <button id="tut-skip" class="ghost">跳过教程</button>
+            </div>
+          </div>
+          <div id="layer-switch" class="layer-switch">
+            <button id="btn-layer-ground" type="button" class="active">地面</button>
+            <button id="btn-layer-air" type="button">空域</button>
+          </div>
+          <div id="layer-tag">地面</div>
+          <div id="toast"></div>
+          <div id="hover-tip" class="hidden"></div>
+          <div id="city-card" class="hidden"></div>
+          <div id="ai-banner" class="hidden">红方正在行动…</div>
+          <button id="btn-next-idle-float" class="next-idle-btn" type="button">未行动单位</button>
+          <button id="btn-end-float" class="end-turn-btn" type="button">结束回合</button>
+        </div>
+
+        <aside id="side">
+          <section class="panel">
+            <div class="panel-h">
+              <h2>征召</h2>
+              <span class="muted" id="shop-hint">按左侧提示操作</span>
+            </div>
+            <div id="shop"></div>
+          </section>
+          <section class="panel grow">
+            <div class="panel-h">
+              <h2>情报</h2>
+              <div class="atk-btns">
+                <button id="btn-ranged" class="ghost small hidden">远程攻击</button>
+                <button id="btn-air-atk" class="ghost small hidden">攻击空军</button>
+                <button id="btn-land" class="ghost small hidden">降落</button>
+                <button id="btn-takeoff" class="ghost small hidden">起飞</button>
+                <button id="btn-escort" class="ghost small hidden">护卫</button>
+                <button id="btn-unescort" class="ghost small hidden">解除护卫</button>
+                <button id="btn-road" class="ghost small hidden">铺路 75</button>
+                <button id="btn-fort" class="ghost small hidden">要塞 500</button>
+                <button id="btn-tunnel" class="ghost small hidden">开隧道 300</button>
+                <button id="btn-board" class="ghost small hidden">上船</button>
+                <button id="btn-unload" class="ghost small hidden">下船</button>
+              </div>
+            </div>
+            <div id="inspect">
+              <p class="muted inspect-empty">跟随左上角教学卡操作。</p>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <footer id="log-bar">
+        <div id="log"></div>
+      </footer>
+    </section>
+
+    <div id="modal-help" class="modal hidden">
+      <div class="modal-card wide">
+        <h2>作战规则</h2>
+        <div class="help-grid">
+          <div>
+            <h3>胜负</h3>
+            <p>每名玩家拥有若干城市。己方城市全部被攻占即战败，所有单位消失。占领地图上全部城市即获胜。</p>
+            <h3>城市</h3>
+            <p>城市占 1 格，周围 8 格（含斜角）为控制区：蓝为自己，红为敌人。第 10 回合后，每 15 回合所有城市控制区扩大 1 圈（5×5，再 7×7），每座城市最多扩大 2 圈。重叠时离城市更近的一方生效。城市 10 点生命，己方回合开始回复 2 点，最低 0 点。近战把敌方城市打到 0 点后，突击单位进入城市格，该城易主。被敌方占领后，该城生命变为 1。第 10 回合起，一座城市连续 3 回合未被攻击即进入修战。修战中可升级友军城市：经济（200 元起，每升一次价格 +100，该城每回合收益 +100）或工事（600 元，生命上限 +5 并回复 5）。每名玩家每座城市每 5 回合只能升级 1 次。城市被占领后升级效果仍保留。右键城市查看升级效果，友军城市还会显示升级选项。城市格永远是平地。</p>
+            <h3>地形</h3>
+            <p>格子为平地、森林、丘陵、山峰、道路、穿山隧道或海洋。步兵：平地/森林消耗 1，丘陵 2。车辆与火炮：平地 1，森林 2，丘陵 3。从道路格走出视为 0.5 格。穿山隧道可通行，四向相邻的隧道自动连通，穿过连通隧道到达另一端视为移动 1 格。林中步兵、丘陵上的地面单位受地面伤害 −1；坦克和步战车在森林中输出 −1。直射会被中间的森林、丘陵或山峰挡住；攻城炮和迫击炮可越过林丘，但山峰挡住直射和曲射。地面单位无法进入山峰或海洋，也无法在海洋上停留或部署。空军可以飞越海洋。海军只能在海洋或沿海城市行动。机场只能建在平地；处于敌方控制区的机场会易主。</p>
+            <h3>平民与工程</h3>
+            <p>军事工程师 300 元，移动 3，无法攻击，被击即死。相邻的军事地面单位可与其组成护卫队：同格移动（移速跟军事单位），平民无法被攻击；可中途解除，护卫死亡则护卫队解散。工程师在平地花 75 元铺路；在非山峰、非海洋、非城市空格花 500 元建前线要塞（可建在原控制区外，周围 3×3 变为控制区，可驻 2 个地面单位，内部免疫近战与直射，生命 10 每回合 +1，摧毁后单位被挤到相邻格，无空位则死亡）；相邻山峰（含斜角）花 300 元开穿山隧道。修建 1 座前线要塞或开通 2 条隧道后，该工程师撤离消失。铺路不计入这项限制。</p>
+            <h3>金钱</h3>
+            <p>开局各方 1000 元。从第 1 回合开始，每一回合每位玩家每拥有一座城市就获得 100 元，另加该城经济升级带来的额外收益。第 0 回合是准备阶段，没有这项收入。每失去一座城市，该玩家立即获得补偿：首次 1750 元，之后每再丢一座 +500 元；攻占一座城市后，自己的失城补偿重置为 1750 元。士兵在第 10 回合之前可任意购买；从第 10 回合起，每回合士兵总共最多购买 6 个。非士兵单位每种各自每 2 回合只能购买 1 次，冷却互不影响。</p>
+          </div>
+          <div>
+            <h3>行动</h3>
+            <p>第 0 回合只能购买部署。第 1 回合起，每名友军每回合可移动一次。除机关枪队、战斗机每回合可攻击两次外，其余单位每回合攻击一次。步战车、轻/重型坦克可远程攻击，射程 2，伤害与近战相同，每回合远程 1 次，移动后仍可开火。迫击炮 2 回合内只能攻击 1 次，且同一回合不能既移动又攻击。防空炮无法移动，对空伤害 4、对地伤害 2、射程 6，受到空军伤害减半。自行防空炮移动 3，对空伤害 3.5、对地伤害 2、射程 4，移动后仍可开火，受到攻击机和战斗机伤害减半。空军须先移动后攻击，攻击后本回合不能再移动。新部署的单位当回合不能行动。</p>
+            <h3>操作</h3>
+            <p>左上角可切换「地面 / 空域」（快捷键 Tab）。地面层操作地面单位、海军、城市与近战；空域层操作空军与机场。左击商店选择兵种，地面单位在控制区或城市右击部署；海军在海洋或沿海城市右击部署；空军必须在己方机场或航母右击部署。与运输船相邻可点「上船」。点「未行动」或按 N 跳转到下一个尚未行动的友军。</p>
+            <h3>空军与机场</h3>
+            <p>机场 300 元，生命 8，只能建在控制区的平地，一格一座，每座最多停 4 架友军空军。落入敌方控制区的机场立即易主，停场的原属空军被消灭。空军只能部署在机场，攻击机和战斗机也可部署/降落在航空母舰。无法近战、无法进入防守，不能远离最近友军机场或航母超过 20 格。除防空炮和自行防空炮外，地面单位无法攻击空军。空军须先移动后攻击。攻击机对地伤害 4、对空伤害 3、射程 4；战斗机伤害 2、射程 3、每回合攻击 2 次；轻型轰炸机对地/城市 3（3×3 全额）对空 2；重型轰炸机对地/城市 4.5（5×5 全额）对空 2。机场或航母被摧毁时停场空军消灭，超出半径的飞机会坠毁。</p>
+            <h3>海军</h3>
+            <p>勾选生成海洋后可购买海军，只能在海洋或沿海城市部署与移动，不能上陆地。受空军伤害 −1。运输船可载 6 名士兵或军事工程师，另可载 2 辆坦克/步战车/自行火炮或 1 支护卫队。驱逐舰近战 4、远程 3（对空 4）、对地远程 3×3。巡洋舰远程 4（打陆地仅 1）。战列舰近战 5（仅对舰）、远程 4 可打地面。航空母舰无法攻击，攻击机和战斗机可降落。岸防炮部署在邻海陆地，每回合最多移动 1 格，对舰伤害高。</p>
+            <h3>防守与驻守</h3>
+            <p>地面单位 1 回合没有任何行动即进入防守：每回合回复 1 点生命，受到近战伤害 −1，一旦行动即解除。被攻击不算行动。防守减免与地形减免不叠加，取高。有单位站在城市格上时，敌人打这座城或这个单位的伤害由城与单位平分；打单位溢出的伤害转给城市。空军不能进入防守。地形掩护对空军对地无效。</p>
+            <h3>交战反伤</h3>
+            <p>攻击敌方单位时，比较双方对该目标的近战伤害。若对方近战伤害更高，攻击者承受双方伤害差的一半。只打城市、城中无驻守单位时不触发。</p>
+            <h3>人机</h3>
+            <p>红方开局有机会直接采取猛攻，之后根据蓝方的买兵、进攻和攻城在猛攻、均衡、稳守之间切换：你猛攻它会收缩防守并针对买兵，你龟缩它会主动推进。有海洋时红方会采购海军并用运输船投送。</p>
+          </div>
+        </div>
+        <div class="help-units" id="help-units"></div>
+        <button id="btn-help-close" class="primary">关闭</button>
+      </div>
+    </div>
+
+    <div id="modal-end" class="modal hidden">
+      <div class="modal-card end-card">
+        <p class="kicker" id="end-kicker">教程</p>
+        <h2 id="end-title">完成</h2>
+        <p id="end-desc"></p>
+        <div id="end-report" class="end-report hidden"></div>
+        <button id="btn-again" class="primary">返回菜单</button>
+      </div>
+    </div>
+  </div>
+  <script src="game.js"></script>
+  <script src="tutorial.js"></script>
+</body>
+</html>
